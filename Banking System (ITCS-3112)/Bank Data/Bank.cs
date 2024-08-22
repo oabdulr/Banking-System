@@ -165,9 +165,10 @@ namespace Banking_System__ITCS_3112_.Banks
             return account_number.ToString();
         }
 
-        private Account query_lookup(int account_number) => accounts[account_number];
-        
-        private Account slow_query_account(string first, string last, int pin)
+        // public quick
+        public Account query_lookup(int account_number) => accounts[account_number];
+        // private internal only
+        internal Account slow_query_account(string first, string last, int pin)
         {
             // Need a better way
             foreach (KeyValuePair<int, Account> account in accounts)
@@ -175,6 +176,16 @@ namespace Banking_System__ITCS_3112_.Banks
                     return account.Value;
             
             return null;
+        }
+
+        public bool has_executed(int id) => executed_transactions[id] == null ? false : true;
+
+        public Transaction do_transfer(int from_account_number, int to_account_number, float amount)
+        {
+            Transaction transaction = new Transaction(from_account_number, to_account_number, amount);
+            transaction.number = RAND.Next(10000, 99999);
+            transaction.execute(this);
+            return transaction;
         }
 
         // name unchangeable
@@ -186,5 +197,7 @@ namespace Banking_System__ITCS_3112_.Banks
             {2, new Customer(1, "Jane", "Doe", 1223) },
             {3, new Customer(1, "Jonny", "Cam", 1214) }
         };
+
+        private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();
     }
 }

@@ -24,6 +24,25 @@ namespace Banking_System__ITCS_3112_.Banks
         public int get_account_number() { return this.account_number; }
         public float get_balance() { return this.balance; }
 
+        public bool do_transaction(Transaction transaction)
+        {
+            if (transaction is null) return false;
+            if (transaction.from_account != account_number) return false;
+            if (transaction.amt > this.balance) return false;
+
+            this.balance -= transaction.amt;
+            return true;
+        }
+
+        public bool get_transaction(Transaction transaction)
+        {
+            if (transaction is null) return false;
+            if (transaction.to_account != account_number) return false;
+
+            this.balance += transaction.amt;
+            return true;
+        }
+
         // Kinda useless lol
         public double get_pin_hash()
         {
@@ -43,7 +62,7 @@ namespace Banking_System__ITCS_3112_.Banks
 
         public virtual bool prompt_options(Bank bank) { Console.ReadKey(); return false; }
 
-        public bool wire_transfer(int to_account_number, float amount)
+        public Transaction wire_transfer(int to_account_number, float amount, Bank bank) => bank.do_transfer(this.account_number, to_account_number, amount);
 
         public account_type permissions { get; private set; }
 
