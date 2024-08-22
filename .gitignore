@@ -1,0 +1,7 @@
+
+*.vsidx
+/.vs
+*.config
+*.exe
+/Banking System (ITCS-3112)/obj
+/Banking System (ITCS-3112)/bin
