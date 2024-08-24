@@ -35,19 +35,15 @@ namespace Banking_System__ITCS_3112_.Banks
             if (transaction.amt > this.balance) return false;
 
             this.balance -= transaction.amt;
-            Console.WriteLine($"do - {this.balance} {this.pin}");
-
             return true;
         }
 
         public bool get_transaction(Transaction transaction)
         {
             if (transaction is null) return false;
-            Console.WriteLine($"{transaction.to_account}, {this.account_number}");
             if (transaction.to_account != this.account_number) return false;
 
             this.balance += transaction.amt;
-            Console.WriteLine($"get + {this.balance} {this.pin}");
             return true;
         }
 
