@@ -98,13 +98,13 @@ namespace Banking_System__ITCS_3112_.Banks
                 return;
             }
 
-            Console.Write("Enter Amount $");
-            string in_amt = Console.ReadLine();
             float converted_amt = -1;
             while (true)
             {
                 try
                 {
+                    Console.Write("Enter Amount $");
+                    string in_amt = Console.ReadLine();
                     converted_amt = float.Parse(in_amt, NumberStyles.Currency); // Thanks stack overflow
                     break;
                 }

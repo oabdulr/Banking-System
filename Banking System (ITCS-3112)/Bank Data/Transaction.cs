@@ -30,7 +30,7 @@ namespace Banking_System__ITCS_3112_.Banks
             Account to = bank.query_lookup(this.to_account);
             if (to is null) return false;
 
-            Console.WriteLine($"to {to_account} to_acc {to.get_account_number()}");
+            Console.WriteLine($"to {to_account} to_acc {to.full_name()}");
             Thread.Sleep(3000);
 
             if (!from.do_transaction(this)) return false;

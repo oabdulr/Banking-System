@@ -229,8 +229,8 @@ namespace Banking_System__ITCS_3112_.Banks
         private Dictionary<int, Account> accounts = new Dictionary<int, Account>()
         {
             {1, new Customer(1, "John", "Doe", 8821) },
-            {2, new Customer(1, "Jane", "Doe", 1223) },
-            {3, new Customer(1, "Jonny", "Cam", 1214) }
+            {2, new Customer(2, "Jane", "Doe", 1223) },
+            {3, new Customer(3, "Jonny", "Cam", 1214) }
         };
 
         private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();
