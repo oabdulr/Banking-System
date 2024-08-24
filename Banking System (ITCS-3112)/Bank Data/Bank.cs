@@ -19,7 +19,7 @@ namespace Banking_System__ITCS_3112_.Banks
 
     public class Bank
     {
-        public static int SLEEP_TIME = 3000; // ms
+        public static int SLEEP_TIME = 1000; // ms
         public static Random RAND = new Random();
 
         public Bank(string name)
@@ -39,6 +39,7 @@ namespace Banking_System__ITCS_3112_.Banks
 
             Console.WriteLine("(Leave blank if you do not know)");
 
+            Account acc_found = null;
             while (true)
             {
                 try
@@ -48,20 +49,45 @@ namespace Banking_System__ITCS_3112_.Banks
                     if (in_acc == "")
                         break;
 
-                    Account acc = query_lookup(Convert.ToInt32(in_acc));
-                    if (acc == null)
-                        break;
-                    else
-                        return acc;
+                    acc_found = query_lookup(Convert.ToInt32(in_acc));
+                    break;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("\nInvalid Account, Number Only\n");
+                    Console.WriteLine("\nInvalid Account, Numbers Only\n");
+                }
+            }
+
+            while (acc_found != null)
+            {
+                try
+                {
+                    Console.Write("Enter Pin Number: ");
+                    string in_pin = Console.ReadLine();
+                    if (in_pin == "")
+                        break;
+
+                    if (!acc_found.compare_pin(Convert.ToInt32(in_pin)))
+                    {
+                        Console.WriteLine("\nLogin failed.");
+                        Thread.Sleep(SLEEP_TIME);
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("\nLogged in.");
+                        Thread.Sleep(SLEEP_TIME);
+                        return acc_found;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("\nInvalid Account, Numbers Only\n");
                 }
             }
 
 
-            Console.Write("Enter First Name: ");
+            Console.Write("\nEnter First Name: ");
             string in_first = Console.ReadLine();
             Console.Write("Enter Last Name: ");
             string in_last = Console.ReadLine();
@@ -78,7 +104,7 @@ namespace Banking_System__ITCS_3112_.Banks
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("\nInvalid Pin, Number Only\n");
+                    Console.WriteLine("\nInvalid Pin, Numbers Only\n");
                 }
             }
 
@@ -114,7 +140,7 @@ namespace Banking_System__ITCS_3112_.Banks
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("\nInvalid Pin, Number Only\n");
+                    Console.WriteLine("\nInvalid Pin, Numbers Only\n");
                 }
             }
 
@@ -166,7 +192,12 @@ namespace Banking_System__ITCS_3112_.Banks
         }
 
         // public quick
-        public Account query_lookup(int account_number) => accounts[account_number];
+        public Account query_lookup(int account_number)
+        {
+            if (accounts.TryGetValue(account_number, out Account ret))
+                return ret;
+            return null;
+        }
         // private internal only
         internal Account slow_query_account(string first, string last, int pin)
         {
@@ -178,11 +209,15 @@ namespace Banking_System__ITCS_3112_.Banks
             return null;
         }
 
-        public bool has_executed(int id) => executed_transactions[id] == null ? false : true;
+        public bool has_executed(int id) => executed_transactions.ContainsKey(id);
+        public void add_executed(Transaction transaction) => executed_transactions[transaction.number] = transaction;
 
         public Transaction do_transfer(int from_account_number, int to_account_number, float amount)
         {
-            Transaction transaction = new Transaction(from_account_number, to_account_number, amount);
+            Transaction transaction = new Transaction();
+            transaction.from_account = from_account_number;
+            transaction.to_account = to_account_number;
+            transaction.amt = amount;
             transaction.number = RAND.Next(10000, 99999);
             transaction.execute(this);
             return transaction;

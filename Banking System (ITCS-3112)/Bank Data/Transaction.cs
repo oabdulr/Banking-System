@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Banking_System__ITCS_3112_.Banks
@@ -29,10 +30,16 @@ namespace Banking_System__ITCS_3112_.Banks
             Account to = bank.query_lookup(this.to_account);
             if (to is null) return false;
 
-            from.do_transaction(this);
-            to.get_transaction(this);
+            Console.WriteLine($"to {to_account} to_acc {to.get_account_number()}");
+            Thread.Sleep(3000);
 
-            return true;
+            if (!from.do_transaction(this)) return false;
+            if (!to.get_transaction(this)) return false;
+
+
+            bank.add_executed(this);
+            this.passed = true;
+            return this.passed;
         }
 
         public int from_account;
@@ -40,5 +47,7 @@ namespace Banking_System__ITCS_3112_.Banks
         public float amt;
 
         public int number;
+
+        public bool passed = false;
     }
 }
