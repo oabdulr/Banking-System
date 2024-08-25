@@ -217,8 +217,6 @@ namespace Banking_System__ITCS_3112_.Banks
 
         public bool prompt_pin_reset()
         {
-            if (!this.needs_reset) return false;
-
             Console.Clear();
             Console.WriteLine("Pin Reset\n");
             int converted_pin = -1;
@@ -230,7 +228,14 @@ namespace Banking_System__ITCS_3112_.Banks
                     string in_pin = Console.ReadLine();
                     converted_pin = Convert.ToInt32(in_pin);
                     if (converted_pin <= 999 || converted_pin > 99999)
+                    {
                         Console.WriteLine("\nInvalid Pin, stay within xxxx or xxxxx digets.\n");
+                        continue;
+                    }
+                    Console.Write("Re-Enter Pin: ");
+                    string in_pin_r = Console.ReadLine();
+                    if (in_pin != in_pin_r)
+                        Console.WriteLine("\nPins do not match\n");
                     else
                         break;
                 }
