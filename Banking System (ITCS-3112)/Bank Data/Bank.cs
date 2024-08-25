@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace Banking_System__ITCS_3112_.Banks
 {
@@ -19,7 +20,7 @@ namespace Banking_System__ITCS_3112_.Banks
 
     public class Bank
     {
-        public static int SLEEP_TIME = 1000; // ms
+        public static int SLEEP_TIME = 1500; // ms
         public static Random RAND = new Random();
 
         public Bank(string name)
@@ -58,32 +59,56 @@ namespace Banking_System__ITCS_3112_.Banks
                 }
             }
 
-            while (acc_found != null)
+            if (acc_found != null)
             {
-                try
+                DateTime acc_dob = this.prompt_dob();
+                if (!acc_found.validate_dob(acc_dob))
                 {
-                    Console.Write("Enter Pin Number: ");
-                    string in_pin = Console.ReadLine();
-                    if (in_pin == "")
-                        break;
+                    Console.WriteLine("\nLogin failed.");
+                    Thread.Sleep(SLEEP_TIME);
+                    return null;
+                }
 
-                    if (!acc_found.compare_pin(Convert.ToInt32(in_pin)))
+                if (acc_found.needs_reset)
+                {
+                    if (acc_found.prompt_pin_reset())
+                        return acc_found;
+                    else
                     {
                         Console.WriteLine("\nLogin failed.");
                         Thread.Sleep(SLEEP_TIME);
-                        break;
+                        return null;
                     }
-                    else
+                }
+                else
+                    while (true)
                     {
-                        Console.WriteLine("\nLogged in.");
-                        Thread.Sleep(SLEEP_TIME);
-                        return acc_found;
+                        try
+                        {
+
+                            Console.Write("Enter Pin Number: ");
+                            string in_pin = Console.ReadLine();
+                            if (in_pin == "")
+                                break;
+
+                            if (!acc_found.compare_pin(Convert.ToInt32(in_pin)))
+                            {
+                                Console.WriteLine("\nLogin failed.");
+                                Thread.Sleep(SLEEP_TIME);
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("\nLogged in.");
+                                Thread.Sleep(SLEEP_TIME);
+                                return acc_found;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("\nInvalid Pin, Numbers Only\n");
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("\nInvalid Account, Numbers Only\n");
-                }
             }
 
 
@@ -91,8 +116,8 @@ namespace Banking_System__ITCS_3112_.Banks
             string in_first = Console.ReadLine();
             Console.Write("Enter Last Name: ");
             string in_last = Console.ReadLine();
+            DateTime dob = this.prompt_dob();
             int converted_pin = -1;
-
             while (true)
             {
                 try
@@ -108,7 +133,7 @@ namespace Banking_System__ITCS_3112_.Banks
                 }
             }
 
-            Account account = slow_query_account(in_first, in_last, converted_pin); ;
+            Account account = slow_query_account(in_first, in_last, dob, converted_pin); ;
 
             if (account is null)
                 Console.WriteLine("\nLogin Failed.");
@@ -117,6 +142,33 @@ namespace Banking_System__ITCS_3112_.Banks
 
             Thread.Sleep(SLEEP_TIME);
             return account;
+        }
+
+        public DateTime prompt_dob()
+        {
+            DateTime time = DateTime.MinValue;
+
+            // we accept all people, no age restriction, including yet to be born people!
+            while (true)
+            {
+                Console.Write("Please enter you date of birth as mm/dd/yyyy\nDOB: ");
+                string date_of_birth = Console.ReadLine();
+                string[] dob_arr = date_of_birth.Split('/');
+                try
+                {
+                    int month = Convert.ToInt32(dob_arr[0]);
+                    int day = Convert.ToInt32(dob_arr[1]);
+                    int year = Convert.ToInt32(dob_arr[2]);
+                    time = new DateTime(year, month, day);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Invalid entry\n");
+                }
+            }
+
+            return time;
         }
 
         public void prompt_create_user()
@@ -128,6 +180,7 @@ namespace Banking_System__ITCS_3112_.Banks
             string in_first = Console.ReadLine();
             Console.Write("Enter Last Name (max 24 char): ");
             string in_last = Console.ReadLine();
+            DateTime dob = this.prompt_dob();
             int converted_pin = -1;
             while (true)
             {
@@ -144,10 +197,10 @@ namespace Banking_System__ITCS_3112_.Banks
                 }
             }
 
-            string return_data = create_user(in_first, in_last, converted_pin);
+            string return_data = create_user(in_first, in_last, dob, converted_pin);
             switch (return_data)
             {
-                case "pin":
+                case "invalid_pin":
                     Console.WriteLine("\nInvalid Pin, stay within xxxx or xxxxx digets.\n");
                     Thread.Sleep(SLEEP_TIME);
                     this.prompt_create_user();
@@ -159,6 +212,11 @@ namespace Banking_System__ITCS_3112_.Banks
                     break;
                 case "invalid_last":
                     Console.WriteLine("\nInvalid Last Name, max 24 characters.\n");
+                    Thread.Sleep(SLEEP_TIME);
+                    this.prompt_create_user();
+                    break;
+                case "invalid_dob":
+                    Console.WriteLine("\nInvalid Date of Birth Name, mm/dd/yy\n");
                     Thread.Sleep(SLEEP_TIME);
                     this.prompt_create_user();
                     break;
@@ -174,20 +232,55 @@ namespace Banking_System__ITCS_3112_.Banks
             }
         }
 
-        private string create_user(string first, string last, int pin)
+        public void prompt_employee_reset_pin()
+        {
+            Console.Clear();
+            Console.WriteLine("Account Recovery\n");
+
+            Console.Write("Enter First Name (max 24 char): ");
+            string in_first = Console.ReadLine();
+            Console.Write("Enter Last Name (max 24 char): ");
+            string in_last = Console.ReadLine();
+
+            DateTime dob = this.prompt_dob();
+
+            Account located_account = slow_query_account(in_first, in_last, dob);
+            if (located_account is null)
+            {
+                Console.WriteLine("\nInvalid information\nPlease try again later.");
+                Thread.Sleep(SLEEP_TIME);
+                return;
+            }
+
+            Console.WriteLine("\nCheck customers ID to verify pin reset\n1. Continue\n2. Exit");
+            if (Console.ReadKey().KeyChar != '1')
+            {
+                Console.WriteLine("\nPin Reset Failed.\nPlease try again later.");
+                Thread.Sleep(SLEEP_TIME);
+                return;
+            }
+
+            located_account.needs_reset = true;
+            Console.WriteLine("\nCustomer will be prompted for a new pin on next login attempt.\nPin Reset Successful.");
+            Thread.Sleep(SLEEP_TIME * 2);
+        }
+
+        private string create_user(string first, string last, DateTime dob, int pin)
         {
             if (first.Length > 24 || first.Length == 0)
                 return "invalid_first";
             if (last.Length > 24 || last.Length == 0)
                 return "invalid_last";
+            if (dob == DateTime.MinValue)
+                return "invalid_dob";
             if (pin <= 999 || pin > 99999)
-                return "pin";
+                return "invalid_pin";
 
-            if (slow_query_account(first, last, pin) != null)
+            if (slow_query_account(first, last, dob, pin) != null)
                 return "repeat";
 
             int account_number = RAND.Next(100000, 999999);
-            accounts.Add(account_number, new Account(account_number, first, last, pin));
+            accounts.Add(account_number, new Account(account_number, first, last, dob, pin));
             return account_number.ToString();
         }
 
@@ -199,13 +292,13 @@ namespace Banking_System__ITCS_3112_.Banks
             return null;
         }
         // private internal only
-        internal Account slow_query_account(string first, string last, int pin)
+        internal Account slow_query_account(string first, string last, DateTime dob, int pin = 0)
         {
             // Need a better way
             foreach (KeyValuePair<int, Account> account in accounts)
-                if (first == account.Value.get_first() && account.Value.compare_pin(pin) && (last == "" ? true : last == account.Value.get_last()))
+                if (first == account.Value.get_first() && account.Value.validate_dob(dob) && (pin != 0 ? account.Value.compare_pin(pin) : true) && (last == "" ? true : last == account.Value.get_last()))
                     return account.Value;
-            
+
             return null;
         }
 
@@ -229,9 +322,9 @@ namespace Banking_System__ITCS_3112_.Banks
 
         private Dictionary<int, Account> accounts = new Dictionary<int, Account>()
         {
-            {1, new Customer(1, "John", "Doe", 8821) },
-            {2, new Customer(2, "Jane", "Doe", 1223) },
-            {3, new Customer(3, "Jonny", "Cam", 1214) }
+            {1, new Customer(1, "John", "Doe", new DateTime(2024, 8, 25), 8821) },
+            {2, new Customer(2, "Jane", "Doe", new DateTime(2024, 8, 24), 1223) },
+            {3, new Employee(3, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
         };
 
         private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();

@@ -12,7 +12,7 @@ namespace Banking_System__ITCS_3112_
         static void Main(string[] args)
         {
             Bank central_bank = new Bank("Central Bank");
-            Account logged_in_account = central_bank.query_lookup(1); //  for debug
+            Account logged_in_account = central_bank.query_lookup(3); //  for debug
 
             while (true)
             {

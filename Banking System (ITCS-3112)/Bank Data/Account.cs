@@ -12,12 +12,13 @@ namespace Banking_System__ITCS_3112_.Banks
     {
         public static int SLEEP_TIME = 1000; // ms
 
-        public Account(int account_number, string first, string last, int pin, account_type type = account_type.customer)
+        public Account(int account_number, string first, string last, DateTime dob, int pin, account_type type = account_type.customer)
         {
             this.account_number = account_number; ;
             this.first = first;
             this.last = last;
-            this.pin = pin;
+            this.dob = dob;
+            this.pin = this.hash_pin(pin);
 
             this.permissions = type;
         }
@@ -27,7 +28,7 @@ namespace Banking_System__ITCS_3112_.Banks
         public string full_name() { return $"{this.get_first()} {this.get_last()}"; }
         public int get_account_number() { return this.account_number; }
         public float get_balance() { return this.balance; }
-
+        public bool validate_dob(DateTime dob) => dob.Equals(this.dob);
         public bool do_transaction(Transaction transaction)
         {
             if (transaction is null) return false;
@@ -49,10 +50,16 @@ namespace Banking_System__ITCS_3112_.Banks
             return true;
         }
 
-        // Kinda useless lol
         public double get_pin_hash()
         {
-            return Math.Pow((float)pin * salt, 8);
+            // double hash as we store normal hash so useless function but will keep anyways
+            return Math.Pow((float)this.pin * salt, 8);
+        }
+
+        public double get_pin()
+        {
+            // hashed pin
+            return this.pin;
         }
 
         public double hash_pin(int pin)
@@ -63,7 +70,7 @@ namespace Banking_System__ITCS_3112_.Banks
         // pin == this.pin with extra steps
         public bool compare_pin(int pin)
         {
-            return hash_pin(pin) == get_pin_hash();
+            return hash_pin(pin) == get_pin();
         }
 
         public virtual bool prompt_options(Bank bank) { Console.ReadKey(); return false; }
@@ -208,15 +215,52 @@ namespace Banking_System__ITCS_3112_.Banks
             }
         }
 
+        public bool prompt_pin_reset()
+        {
+            if (!this.needs_reset) return false;
+
+            Console.Clear();
+            Console.WriteLine("Pin Reset\n");
+            int converted_pin = -1;
+            while (true)
+            {
+                try
+                {
+                    Console.Write("Enter New Pin: ");
+                    string in_pin = Console.ReadLine();
+                    converted_pin = Convert.ToInt32(in_pin);
+                    if (converted_pin <= 999 || converted_pin > 99999)
+                        Console.WriteLine("\nInvalid Pin, stay within xxxx or xxxxx digets.\n");
+                    else
+                        break;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("\nInvalid Pin, Numbers Only\n");
+                }
+            }
+
+            this.needs_reset = false;
+            this.pin = this.hash_pin(converted_pin);
+
+            Console.WriteLine("Pin Reset Successful.");
+            Thread.Sleep(SLEEP_TIME);
+            return true;
+        }
+
         public Transaction wire_transfer(int to_account_number, float amount, Bank bank) => bank.do_transfer(this.account_number, to_account_number, amount);
         public account_type permissions { get; private set; }
+        public bool needs_reset = false;
 
         private string first;
         private string last;
-        private int pin;
+        private double pin;
         private float balance = 100000f;
+        private DateTime dob;
+        private DateTime creation_date = DateTime.Now;
 
-        private float salt = -214.22f;
+        // + 0.081 so it isnt 0 and the salt is 0 lol
+        private float salt = (float)((new Random().NextDouble() + 0.081) * 10f);
 
         private int account_number;
 
