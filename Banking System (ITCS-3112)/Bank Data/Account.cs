@@ -165,10 +165,11 @@ namespace Banking_System__ITCS_3112_.Banks
                     Transaction transaction = this.transactions[(current_page * (int)PER_PAGE) + x];
                     if (transaction is null) continue;
                     if (!transaction.passed) continue;
+                    if (transaction.executed_date == DateTime.MinValue || transaction.executed_date > DateTime.Now) continue;
 
                     bool is_recieving = transaction.to_account == this.account_number;
                     Account other = is_recieving ? bank.query_lookup(transaction.from_account) : bank.query_lookup(transaction.to_account);
-                    Console.WriteLine($"{(is_recieving ? "+" : "-")} {transaction.amt:C} {(is_recieving ? "from" : "to")} {other.full_name()} at {transaction.date}");
+                    Console.WriteLine($"{(is_recieving ? "+" : "-")} {transaction.amt:C} {(is_recieving ? "from" : "to")} {other.full_name()} executed at {transaction.executed_date}");
                 }
 
                 Console.WriteLine();

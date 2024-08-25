@@ -45,6 +45,7 @@ namespace Banking_System__ITCS_3112_.Banks
 
             bank.add_executed(this);
             this.passed = true;
+            this.executed_date = DateTime.Now;
             return this.passed;
         }
 
@@ -56,6 +57,7 @@ namespace Banking_System__ITCS_3112_.Banks
 
         public bool passed = false;
         public transaction_type type = transaction_type.other;
-        public DateTime date = DateTime.Now;
+        public DateTime created_date = DateTime.Now;
+        public DateTime executed_date = DateTime.MinValue;
     }
 }
