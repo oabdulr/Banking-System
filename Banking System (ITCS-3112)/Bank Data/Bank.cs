@@ -219,6 +219,7 @@ namespace Banking_System__ITCS_3112_.Banks
             transaction.to_account = to_account_number;
             transaction.amt = amount;
             transaction.number = RAND.Next(10000, 99999);
+            transaction.type = transaction_type.wire_transfer;
             transaction.execute(this);
             return transaction;
         }

@@ -8,18 +8,28 @@ using System.Threading.Tasks;
 
 namespace Banking_System__ITCS_3112_.Banks
 {
+    public enum transaction_type
+    {
+        purchase,
+        wire_transfer,
+        other
+    }
+
     public class Transaction
     {
         public Transaction() { }
-        public Transaction(int from_account, int to_account, float amt) 
+        public Transaction(int from_account, int to_account, int number, float amt) 
         {
             this.from_account = from_account;
             this.to_account = to_account;
+            this.number = number;
             this.amt = amt;
         }
 
         public bool execute(Bank bank)
         {
+            if (this.amt <= 0) return false;
+            if (this.to_account == this.from_account) return false;
             if (bank.has_executed(this.number)) return false;
 
             Account from = bank.query_lookup(this.from_account);
@@ -45,5 +55,7 @@ namespace Banking_System__ITCS_3112_.Banks
         public int number;
 
         public bool passed = false;
+        public transaction_type type = transaction_type.other;
+        public DateTime date = DateTime.Now;
     }
 }

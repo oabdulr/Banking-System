@@ -35,6 +35,7 @@ namespace Banking_System__ITCS_3112_.Banks
             if (transaction.amt > this.balance) return false;
 
             this.balance -= transaction.amt;
+            this.transactions.Add(transaction);
             return true;
         }
 
@@ -44,6 +45,7 @@ namespace Banking_System__ITCS_3112_.Banks
             if (transaction.to_account != this.account_number) return false;
 
             this.balance += transaction.amt;
+            this.transactions.Add(transaction);
             return true;
         }
 
@@ -65,18 +67,18 @@ namespace Banking_System__ITCS_3112_.Banks
         }
 
         public virtual bool prompt_options(Bank bank) { Console.ReadKey(); return false; }
-        public void prompt_wire_transfer(Bank bank) 
+        public void prompt_wire_transfer(Bank bank)
         {
             Console.Clear();
             Console.WriteLine("Wire Transfer Menu\n");
 
-            Console.Write("Enter Transfer Account: ");
-            string in_account = Console.ReadLine();
             int converted_acc = -1;
             while (true)
             {
                 try
                 {
+                    Console.Write("Enter Transfer Account: ");
+                    string in_account = Console.ReadLine();
                     converted_acc = Convert.ToInt32(in_account);
                     break;
                 }
@@ -84,6 +86,13 @@ namespace Banking_System__ITCS_3112_.Banks
                 {
                     Console.WriteLine("\nInvalid Account, Numbers Only\n");
                 }
+            }
+
+            if (converted_acc == this.account_number)
+            {
+                Console.WriteLine("\nYou Cannot Transfer to Your Self\n");
+                Thread.Sleep(SLEEP_TIME);
+                return;
             }
 
             Account located_account = bank.query_lookup(converted_acc);
@@ -123,10 +132,79 @@ namespace Banking_System__ITCS_3112_.Banks
             {
                 Console.WriteLine("\nTransaction Failed.\n");
                 Thread.Sleep(SLEEP_TIME);
-            }else
+            }
+            else
             {
                 Console.WriteLine("\nTransaction Succeeded.\n");
                 Thread.Sleep(SLEEP_TIME);
+            }
+        }
+
+        private static double PER_PAGE = 10;
+        public void prompt_actvity(Bank bank)
+        {
+            int pages = (int)Math.Ceiling((double)this.transactions.Count / PER_PAGE);
+            int current_page = 0;
+
+            // holy spagetti code
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("Recent Activity\n");
+
+                for (int x = 0; x < PER_PAGE; x++)
+                {
+                    if (((current_page * (int)PER_PAGE) + x) > this.transactions.Count - 1) break;
+                    Transaction transaction = this.transactions[(current_page * (int)PER_PAGE) + x];
+                    if (transaction is null) continue;
+                    if (!transaction.passed) continue;
+
+                    bool is_recieving = transaction.to_account == this.account_number;
+                    Account other = is_recieving ? bank.query_lookup(transaction.from_account) : bank.query_lookup(transaction.to_account);
+                    Console.WriteLine($"{(is_recieving ? "+" : "-")} {transaction.amt:C} {(is_recieving ? "from" : "to")} {other.full_name()} at {transaction.date}");
+                }
+
+                Console.WriteLine();
+                if (current_page <= 0)
+                {
+                    if (pages > 1)
+                    {
+                        Console.WriteLine($"1. Next Page\n2. Exit\n");
+                        char input = Console.ReadKey().KeyChar;
+                        if (input == '1')
+                            current_page++;
+                        else if (input == '2')
+                            break;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"1. Exit\n");
+                        if (Console.ReadKey().KeyChar == '1')
+                            break;
+                    }
+                }
+                else if ((current_page + 1) >= pages)
+                {
+
+                    Console.WriteLine($"1. Prev Page\n2. Exit\n");
+                    char input = Console.ReadKey().KeyChar;
+                    if (input == '1')
+                        current_page--;
+                    else if (input == '2')
+                        break;
+
+                }
+                else
+                {
+                    Console.WriteLine($"1. Next Page\n2. Prev Page\n3. Exit\n");
+                    char input = Console.ReadKey().KeyChar;
+                    if (input == '1')
+                        current_page++;
+                    else if (input == '2')
+                        current_page--;
+                    else if (input == '3')
+                        break;
+                }
             }
         }
 

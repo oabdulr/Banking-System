@@ -26,6 +26,7 @@ namespace Banking_System__ITCS_3112_.Bank_Data.Accounts
             switch (input)
             {
                 case '1':
+                    this.prompt_actvity(bank);
                     break;
                 case '2':
                     this.prompt_wire_transfer(bank);
