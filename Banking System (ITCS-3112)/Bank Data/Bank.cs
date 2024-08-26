@@ -265,6 +265,33 @@ namespace Banking_System__ITCS_3112_.Banks
             Thread.Sleep(SLEEP_TIME * 2);
         }
 
+        public Account prompt_manager_view()
+        {
+            Console.Clear();
+            Console.WriteLine("Profile Manager\n");
+
+            Console.Write("Enter First Name (max 24 char): ");
+            string in_first = Console.ReadLine();
+            Console.Write("Enter Last Name (max 24 char): ");
+            string in_last = Console.ReadLine();
+
+            DateTime dob = this.prompt_dob();
+
+            Account located_account = slow_query_account(in_first, in_last, dob);
+            if (located_account is null)
+            {
+                Console.WriteLine("\nInvalid information\nPlease try again later.");
+                Thread.Sleep(SLEEP_TIME);
+            }
+            else
+            {
+                Console.WriteLine("\nLoaded Profile.");
+                Thread.Sleep(SLEEP_TIME);
+            }
+
+            return located_account;
+        }
+
         private string create_user(string first, string last, DateTime dob, int pin)
         {
             if (first.Length > 24 || first.Length == 0)
@@ -324,7 +351,7 @@ namespace Banking_System__ITCS_3112_.Banks
         {
             {1, new Customer(1, "John", "Doe", new DateTime(2024, 8, 25), 8821) },
             {2, new Customer(2, "Jane", "Doe", new DateTime(2024, 8, 24), 1223) },
-            {3, new Employee(3, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
+            {3, new Manager(3, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
         };
 
         private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();
