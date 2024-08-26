@@ -351,7 +351,8 @@ namespace Banking_System__ITCS_3112_.Banks
         {
             {1, new Customer(1, "John", "Doe", new DateTime(2024, 8, 25), 8821) },
             {2, new Customer(2, "Jane", "Doe", new DateTime(2024, 8, 24), 1223) },
-            {3, new Manager(3, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
+            {3, new Employee(3, "Jane", "Doe", new DateTime(2024, 8, 24), 1223) },
+            {4, new Manager(4, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
         };
 
         private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();
