@@ -34,9 +34,9 @@ namespace Banking_System__ITCS_3112_.Banks
         {
             if (transaction is null) return false;
             if (transaction.from_account != account_number) return false;
-            if (transaction.amt > this.balance) return false;
+            if (transaction.amt * transaction.rate > this.balance) return false;
 
-            this.balance -= transaction.amt;
+            this.balance -= transaction.amt * transaction.rate;
             this.transactions.Add(transaction);
             return true;
         }
@@ -46,7 +46,7 @@ namespace Banking_System__ITCS_3112_.Banks
             if (transaction is null) return false;
             if (transaction.to_account != this.account_number) return false;
 
-            this.balance += transaction.amt;
+            this.balance += transaction.amt * transaction.rate;
             this.transactions.Add(transaction);
             return true;
         }
@@ -170,7 +170,9 @@ namespace Banking_System__ITCS_3112_.Banks
 
                     bool is_recieving = transaction.to_account == this.account_number;
                     Account other = is_recieving ? bank.query_lookup(transaction.from_account) : bank.query_lookup(transaction.to_account);
-                    Console.WriteLine($"{(is_recieving ? "+" : "-")} {transaction.amt:C} {(is_recieving ? "from" : "to")} {other.full_name()} executed at {transaction.executed_date}");
+                    if (transaction.rate < 0) is_recieving = !is_recieving;
+
+                    Console.WriteLine($"{(is_recieving ? "+" : "-")} {transaction.amt * transaction.rate:C} {(is_recieving ? "from" : "to")} {other.full_name()} executed at {transaction.executed_date}");
                 }
 
                 Console.WriteLine();
@@ -259,38 +261,39 @@ namespace Banking_System__ITCS_3112_.Banks
         {
             Console.Clear();
             Console.WriteLine("Loading ..."); // lol
-            DateTime t = DateTime.Now;
-            Thread run = new Thread(() =>
+            DateTime t = DateTime.Now.AddSeconds(-5);
+
+            bool running = true;
+            bool inMenu = false;
+            while (running)
             {
-                bool running = true;
-                bool inMenu = false;
-                while (running)
+                if (!inMenu && (DateTime.Now - t).TotalSeconds > 3)
                 {
-                    if (!inMenu && (DateTime.Now - t).TotalSeconds > 3)
+                    Console.SetCursorPosition(0, 0);
+
+                    lock (bank.tLock)
                     {
-                        Console.SetCursorPosition(0, 0);
-
-                        lock (bank.tLock)
+                        for (int i = 0; i < bank.get_companies().Count; i++)
                         {
-                            for (int i = 0; i < bank.get_companies().Count; i++)
-                            {
-                                Company c = bank.get_companies()[i];
-                                Console.Write($"{i + 1}. ");
-                                Console.ForegroundColor = ConsoleColor.DarkCyan;
-                                Console.Write($"{c.name.ToUpper()}");
-                                Console.ForegroundColor = ConsoleColor.White;
-                                Console.Write($" at ");
-                                Console.ForegroundColor = c.value < c.last_value ? ConsoleColor.Red : ConsoleColor.Green;
-                                Console.Write($"{c.value:C}          \n");
-                                Console.ForegroundColor = ConsoleColor.White;
-                            }
-
-                            Console.WriteLine($"{bank.get_companies().Count + 1}. Exit\n");
-
+                            Company c = bank.get_companies()[i];
+                            Console.Write($"{i + 1}. ");
+                            Console.ForegroundColor = ConsoleColor.DarkCyan;
+                            Console.Write($"{c.name.ToUpper()}");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.Write($" at ");
+                            Console.ForegroundColor = c.value < c.last_value ? ConsoleColor.Red : ConsoleColor.Green;
+                            Console.Write($"{c.value:C}          \n");
+                            Console.ForegroundColor = ConsoleColor.White;
                         }
-                    }
 
-                    if (Console.KeyAvailable) // non blocking
+                        Console.WriteLine($"{bank.get_companies().Count + 1}. Exit\n");
+
+                    }
+                }
+
+                if (Console.KeyAvailable) // non blocking
+                {
+                    try
                     {
                         int i = Convert.ToInt16(Console.ReadKey(true).KeyChar.ToString());
                         if (i > bank.get_companies().Count)
@@ -300,7 +303,7 @@ namespace Banking_System__ITCS_3112_.Banks
                             inMenu = true;
                             Company c = bank.get_companies()[i - 1];
                             Console.Clear();
-                            Console.Write("Invest in ");
+                            Console.Write("Buy/Sell ");
                             Console.ForegroundColor = ConsoleColor.DarkCyan;
                             Console.Write($"{c.name.ToUpper()}");
                             Console.ForegroundColor = ConsoleColor.White;
@@ -308,13 +311,14 @@ namespace Banking_System__ITCS_3112_.Banks
                             Console.ForegroundColor = c.value < c.last_value ? ConsoleColor.Red : ConsoleColor.Green;
                             Console.Write($"{c.value:C}");
                             Console.ForegroundColor = ConsoleColor.White;
-                            Console.Write("?\n");
+                            Console.WriteLine("?\n(* to sell 1 share, do -1 *)");
+                            Console.WriteLine($"\n\nCurrent Shares: {c.get_totalvest(this):F2}\nIf Sold: {c.get_totalvest(this) * c.value:C}");
                             float converted_amt = -1;
                             while (true)
                             {
                                 try
                                 {
-                                    Console.Write("Amount $");
+                                    Console.Write("\nAmount of Shares: ");
                                     string in_amt = Console.ReadLine();
                                     converted_amt = float.Parse(in_amt, NumberStyles.Currency); // Thanks stack overflow
                                     break;
@@ -325,19 +329,47 @@ namespace Banking_System__ITCS_3112_.Banks
                                 }
                             }
 
+                            if (converted_amt * c.value > this.balance)
+                            {
+                                Console.WriteLine("\nInsufficent Funds.\n");
+                                Thread.Sleep(SLEEP_TIME);
+                                return;
+                            }
+
+                            if (converted_amt < 0 && (Math.Abs(converted_amt) > c.get_totalvest(this)))
+                            {
+                                Console.WriteLine("\nInsufficent Stock Amount.\n");
+                                Thread.Sleep(SLEEP_TIME);
+                                return;
+                            }
+
+
+                            Transaction transaction = this.wire_transfer(c.account.account_number, converted_amt, bank, converted_amt < 0 ? -c.value : c.value);
+                            if (!transaction.passed)
+                            {
+                                Console.WriteLine("\nTransaction Failed.\n");
+                                Thread.Sleep(SLEEP_TIME);
+                            }
+                            else
+                            {
+                                Console.WriteLine("\nTransaction Succeeded.\n");
+                                c.invest(bank, transaction);
+                                Thread.Sleep(SLEEP_TIME);
+                            }
+
+                            Console.Clear();
+                            inMenu = false;
                         }
-
-
-                        Thread.Sleep(1);
                     }
-                }
-            });
+                    catch { }
 
-            run.Start();
-            run.Join();
+
+                    Thread.Sleep(1);
+                }
+            }
         }
 
-        public Transaction wire_transfer(int to_account_number, float amount, Bank bank) => bank.do_transfer(this.account_number, to_account_number, amount);
+        public Transaction wire_transfer(int to_account_number, float amount, Bank bank, float rate = 1) => bank.do_transfer(this.account_number, to_account_number, amount, rate);
         public account_type permissions { get; private set; }
         public bool needs_reset = false;
 

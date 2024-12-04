@@ -29,6 +29,11 @@ namespace Banking_System__ITCS_3112_.Banks
         public Bank(string name)
         {
             this.name = name;
+
+            this.create_company("AAPL", "Apple");
+            this.create_company("MFST", "Microsoft");
+            this.create_company("GME", "Gamestop");
+            this.create_company("LRY", "Larry");
         }
 
         public void display_data()
@@ -295,7 +300,7 @@ namespace Banking_System__ITCS_3112_.Banks
             return located_account;
         }
 
-        private string create_user(string first, string last, DateTime dob, int pin)
+        public string create_user(string first, string last, DateTime dob, int pin)
         {
             if (first.Length > 24 || first.Length == 0)
                 return "invalid_first";
@@ -337,7 +342,7 @@ namespace Banking_System__ITCS_3112_.Banks
         public bool has_executed(int id) => executed_transactions.ContainsKey(id);
         public void add_executed(Transaction transaction) => executed_transactions[transaction.number] = transaction;
 
-        public Transaction do_transfer(int from_account_number, int to_account_number, float amount)
+        public Transaction do_transfer(int from_account_number, int to_account_number, float amount, float rate = 1)
         {
             Transaction transaction = new Transaction();
             transaction.from_account = from_account_number;
@@ -345,6 +350,7 @@ namespace Banking_System__ITCS_3112_.Banks
             transaction.amt = amount;
             transaction.number = get_rand(executed_transactions);
             transaction.type = transaction_type.wire_transfer;
+            transaction.rate = rate;
             transaction.execute(this);
             return transaction;
         }
@@ -356,12 +362,19 @@ namespace Banking_System__ITCS_3112_.Banks
             for (int i = 0; i < 10; i++)
             {
                 rnd = RAND.Next(10000, 99999);
-                if (!executed_transactions.ContainsKey(rnd))
-                    break;
+                if (!list.ContainsKey(rnd))
+                    return rnd;
             }
 
             throw new Exception("Couldnt find new rand for transaction? Fatal Exception");
         }
+
+        public void create_company(string s_name, string name)
+        {
+            Account a = this.query_lookup(Convert.ToInt32(create_user(name, "Stock AAPL", DateTime.Now, 1111)));
+            companies.Add(new Company(s_name, a));
+        }
+
 
         // name unchangeable
         public string name { get; }
@@ -374,13 +387,7 @@ namespace Banking_System__ITCS_3112_.Banks
             {4, new Manager(4, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
         };
 
-        private List<Company> companies = new List<Company>()
-        {
-            new Company("AAPL"),
-            new Company("MFST"),
-            new Company("GME"),
-            new Company("LRY"),
-        };
+        private List<Company> companies = new List<Company>() { };
 
         private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();
     }
