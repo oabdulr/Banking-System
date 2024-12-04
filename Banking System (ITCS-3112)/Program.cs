@@ -1,18 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using Banking_System__ITCS_3112_.Bank_Data.Investments;
 using Banking_System__ITCS_3112_.Banks;
 
 namespace Banking_System__ITCS_3112_
 {
     public class Program
     {
+
+        // as much as I hate threading like this, I designed this app without the idea of ever running multiple things at once
+        // so I have to make the theads like this or I redesign it all :(
+        static void tInvestments(Bank b)
+        {
+            new Thread(() => {
+
+                while (true)
+                {
+                    lock (b.tLock)
+                    {
+                        foreach (Company c in b.get_companies())
+                        {
+                            c.last_value = c.value;
+                            c.value += c.value * (c.tick(Bank.RAND) / 100f);
+                        }
+                    }
+
+                    Thread.Sleep(2000);
+                }
+            
+            }).Start();
+        }
+
+
         static void Main(string[] args)
         {
             Bank central_bank = new Bank("Central Bank");
-            Account logged_in_account = null;
+            Account logged_in_account = central_bank.query_lookup(1);
+
+            tInvestments(central_bank);
 
             while (true)
             {

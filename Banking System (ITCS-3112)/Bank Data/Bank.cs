@@ -1,8 +1,10 @@
 ﻿using Banking_System__ITCS_3112_.Bank_Data.Accounts;
+using Banking_System__ITCS_3112_.Bank_Data.Investments;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +24,7 @@ namespace Banking_System__ITCS_3112_.Banks
     {
         public static int SLEEP_TIME = 1500; // ms
         public static Random RAND = new Random();
+        public object tLock = false;
 
         public Bank(string name)
         {
@@ -311,6 +314,8 @@ namespace Banking_System__ITCS_3112_.Banks
             return account_number.ToString();
         }
 
+        public List<Company> get_companies() => this.companies;
+
         // public quick
         public Account query_lookup(int account_number)
         {
@@ -338,10 +343,24 @@ namespace Banking_System__ITCS_3112_.Banks
             transaction.from_account = from_account_number;
             transaction.to_account = to_account_number;
             transaction.amt = amount;
-            transaction.number = RAND.Next(10000, 99999);
+            transaction.number = get_rand(executed_transactions);
             transaction.type = transaction_type.wire_transfer;
             transaction.execute(this);
             return transaction;
+        }
+
+        private int get_rand<T>(Dictionary<int, T> list) 
+        {
+            int rnd;
+
+            for (int i = 0; i < 10; i++)
+            {
+                rnd = RAND.Next(10000, 99999);
+                if (!executed_transactions.ContainsKey(rnd))
+                    break;
+            }
+
+            throw new Exception("Couldnt find new rand for transaction? Fatal Exception");
         }
 
         // name unchangeable
@@ -353,6 +372,14 @@ namespace Banking_System__ITCS_3112_.Banks
             {2, new Customer(2, "Jane", "Doe", new DateTime(2024, 8, 24), 1223) },
             {3, new Employee(3, "Jane", "Doe", new DateTime(2024, 8, 24), 1223) },
             {4, new Manager(4, "Jonny", "Cam", new DateTime(2024, 8, 23), 1214) }
+        };
+
+        private List<Company> companies = new List<Company>()
+        {
+            new Company("AAPL"),
+            new Company("MFST"),
+            new Company("GME"),
+            new Company("LRY"),
         };
 
         private Dictionary<int, Transaction> executed_transactions = new Dictionary<int, Transaction>();

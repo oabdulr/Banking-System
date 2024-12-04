@@ -21,7 +21,8 @@ namespace Banking_System__ITCS_3112_.Bank_Data.Accounts
             Console.WriteLine("1. Activity");
             Console.WriteLine("2. Wire Transfer");
             Console.WriteLine("3. Reset Pin");
-            Console.WriteLine("4. Logout");
+            Console.WriteLine("4. Investments");
+            Console.WriteLine("5. Logout");
 
             char input = Console.ReadKey().KeyChar;
 
@@ -54,6 +55,9 @@ namespace Banking_System__ITCS_3112_.Bank_Data.Accounts
                     }
                     break;
                 case '4':
+                    this.prompt_investments(bank);
+                    break;
+                case '5':
                     return true;
             }
 

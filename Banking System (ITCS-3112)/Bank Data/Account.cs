@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Banking_System__ITCS_3112_.Bank_Data.Investments;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -252,6 +253,88 @@ namespace Banking_System__ITCS_3112_.Banks
             Console.WriteLine("Pin Reset Successful.");
             Thread.Sleep(SLEEP_TIME);
             return true;
+        }
+
+        public void prompt_investments(Bank bank)
+        {
+            Console.Clear();
+            Console.WriteLine("Loading ..."); // lol
+            DateTime t = DateTime.Now;
+            Thread run = new Thread(() =>
+            {
+                bool running = true;
+                bool inMenu = false;
+                while (running)
+                {
+                    if (!inMenu && (DateTime.Now - t).TotalSeconds > 3)
+                    {
+                        Console.SetCursorPosition(0, 0);
+
+                        lock (bank.tLock)
+                        {
+                            for (int i = 0; i < bank.get_companies().Count; i++)
+                            {
+                                Company c = bank.get_companies()[i];
+                                Console.Write($"{i + 1}. ");
+                                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                                Console.Write($"{c.name.ToUpper()}");
+                                Console.ForegroundColor = ConsoleColor.White;
+                                Console.Write($" at ");
+                                Console.ForegroundColor = c.value < c.last_value ? ConsoleColor.Red : ConsoleColor.Green;
+                                Console.Write($"{c.value:C}          \n");
+                                Console.ForegroundColor = ConsoleColor.White;
+                            }
+
+                            Console.WriteLine($"{bank.get_companies().Count + 1}. Exit\n");
+
+                        }
+                    }
+
+                    if (Console.KeyAvailable) // non blocking
+                    {
+                        int i = Convert.ToInt16(Console.ReadKey(true).KeyChar.ToString());
+                        if (i > bank.get_companies().Count)
+                            running = false;
+                        else
+                        {
+                            inMenu = true;
+                            Company c = bank.get_companies()[i - 1];
+                            Console.Clear();
+                            Console.Write("Invest in ");
+                            Console.ForegroundColor = ConsoleColor.DarkCyan;
+                            Console.Write($"{c.name.ToUpper()}");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.Write($" at ");
+                            Console.ForegroundColor = c.value < c.last_value ? ConsoleColor.Red : ConsoleColor.Green;
+                            Console.Write($"{c.value:C}");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.Write("?\n");
+                            float converted_amt = -1;
+                            while (true)
+                            {
+                                try
+                                {
+                                    Console.Write("Amount $");
+                                    string in_amt = Console.ReadLine();
+                                    converted_amt = float.Parse(in_amt, NumberStyles.Currency); // Thanks stack overflow
+                                    break;
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine("\nInvalid Amount, Numbers Only\n");
+                                }
+                            }
+
+                        }
+
+
+                        Thread.Sleep(1);
+                    }
+                }
+            });
+
+            run.Start();
+            run.Join();
         }
 
         public Transaction wire_transfer(int to_account_number, float amount, Bank bank) => bank.do_transfer(this.account_number, to_account_number, amount);

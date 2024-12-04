@@ -48,6 +48,7 @@
     <Compile Include="Bank Data\Accounts\Employee.cs" />
     <Compile Include="Bank Data\Accounts\Manager.cs" />
     <Compile Include="Bank Data\Bank.cs" />
+    <Compile Include="Bank Data\Investments\Company.cs" />
     <Compile Include="Bank Data\Transaction.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
