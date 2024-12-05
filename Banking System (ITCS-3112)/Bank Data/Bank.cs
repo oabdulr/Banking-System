@@ -315,7 +315,7 @@ namespace Banking_System__ITCS_3112_.Banks
                 return "repeat";
 
             int account_number = RAND.Next(100000, 999999);
-            accounts.Add(account_number, new Account(account_number, first, last, dob, pin));
+            accounts.Add(account_number, new Customer(account_number, first, last, dob, pin));
             return account_number.ToString();
         }
 
